@@ -1,0 +1,1093 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Corruption Control System</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 900px;
+        margin: 30px auto;
+        padding: 0 20px;
+        background: #f4f4f4;
+      }
+      h1 {
+        text-align: center;
+        color: #333;
+      }
+      h2 {
+        color: #444;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 6px;
+      }
+      .section {
+        background: white;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 6px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+      }
+      label {
+        display: block;
+        margin-top: 10px;
+        font-weight: bold;
+        font-size: 14px;
+      }
+      input,
+      select {
+        width: 100%;
+        padding: 8px;
+        margin-top: 4px;
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+      button {
+        margin-top: 14px;
+        padding: 10px 20px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      #status {
+        padding: 10px;
+        margin-bottom: 16px;
+        border-radius: 4px;
+        font-size: 14px;
+        display: none;
+      }
+      #status.success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      #status.error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      .output-box {
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 12px;
+        margin-top: 10px;
+        font-size: 13px;
+        white-space: pre-wrap;
+        min-height: 40px;
+        color: #333;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        font-size: 13px;
+      }
+      th {
+        background: #007bff;
+        color: white;
+        padding: 8px;
+        text-align: left;
+      }
+      td {
+        padding: 8px;
+        border-bottom: 1px solid #ddd;
+      }
+      tr:hover td {
+        background: #f1f1f1;
+      }
+      #wallet-info {
+        font-size: 14px;
+        background: #e8f4fd;
+        padding: 10px;
+        border-radius: 4px;
+        border: 1px solid #bee5eb;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🏛 Corruption Control System</h1>
+    <h3 style="text-align: center; color: #666; margin-top: -10px">
+      Government Fund Allocation — Blockchain Tracker
+    </h3>
+
+    <div id="status"></div>
+
+    <!-- WALLET INFO -->
+    <div class="section">
+      <h2>Connected Wallet</h2>
+      <div id="wallet-info">Loading accounts from Ganache...</div>
+      <label>Select Account (Officer / Admin)</label>
+      <select id="account-select" onchange="switchAccount()"></select>
+    </div>
+
+    <!-- SET ESTIMATE -->
+    <div class="section">
+      <h2>1. Set Project Estimate (Admin Only)</h2>
+      <label>Project ID</label>
+      <input id="est-projectId" placeholder="e.g. PROJ-2024-001" />
+      <label>Estimate Amount (in Wei — treat 1 wei = ₹1 for demo)</label>
+      <input id="est-amount" type="number" placeholder="e.g. 5000" />
+      <button onclick="setEstimate()">Set Estimate</button>
+    </div>
+
+    <!-- ALLOCATE FUNDS -->
+    <div class="section">
+      <h2>2. Allocate Funds</h2>
+      <label>Project ID</label>
+      <input id="al-projectId" placeholder="e.g. PROJ-2024-001" />
+      <label>Event Name (Project Description)</label>
+      <input
+        id="al-eventName"
+        placeholder="e.g. NH-44 Highway Widening Phase 2"
+      />
+      <label>Contractor Name</label>
+      <input id="al-contractor" placeholder="e.g. L&T Infrastructure Ltd" />
+      <label>Fund Amount (in Wei)</label>
+      <input id="al-fund" type="number" placeholder="e.g. 1000" />
+      <label>Remarks</label>
+      <input id="al-remarks" placeholder="e.g. First installment" />
+      <button onclick="allocateFund()">Allocate Fund</button>
+    </div>
+
+    <!-- GET RECORD -->
+    <div class="section">
+      <h2>3. Get Record by ID</h2>
+      <label>Record ID</label>
+      <input id="rec-id" type="number" placeholder="e.g. 1" />
+      <button onclick="getRecord()">Fetch Record</button>
+      <div class="output-box" id="record-output">
+        Output will appear here...
+      </div>
+    </div>
+
+    <!-- PROJECT SUMMARY -->
+    <div class="section">
+      <h2>4. Project Summary</h2>
+      <label>Project ID</label>
+      <input id="sum-projectId" placeholder="e.g. PROJ-2024-001" />
+      <button onclick="getProjectSummary()">Get Summary</button>
+      <div class="output-box" id="summary-output">
+        Output will appear here...
+      </div>
+    </div>
+
+    <!-- PROJECT HISTORY -->
+    <div class="section">
+      <h2>5. Full Project History</h2>
+      <label>Project ID</label>
+      <input id="hist-projectId" placeholder="e.g. PROJ-2024-001" />
+      <button onclick="getProjectHistory()">Load History</button>
+      <table id="history-table" style="display: none">
+        <thead>
+          <tr>
+            <th>Record #</th>
+            <th>Event Name</th>
+            <th>Contractor</th>
+            <th>Estimate</th>
+            <th>This Allocation</th>
+            <th>Total Till Now</th>
+            <th>Timestamp</th>
+            <th>Recorded By</th>
+          </tr>
+        </thead>
+        <tbody id="history-body"></tbody>
+      </table>
+      <div
+        id="history-empty"
+        style="margin-top: 10px; color: #888; font-size: 13px"
+      ></div>
+    </div>
+
+    <!-- VERIFY INTEGRITY -->
+    <div class="section">
+      <h2>6. Verify Project Integrity</h2>
+      <label>Project ID</label>
+      <input id="ver-projectId" placeholder="e.g. PROJ-2024-001" />
+      <button onclick="verifyIntegrity()">Verify</button>
+      <div class="output-box" id="verify-output">
+        Output will appear here...
+      </div>
+    </div>
+
+    <!-- ADD / REMOVE OFFICER -->
+    <div class="section">
+      <h2>7. Manage Officers (Admin Only)</h2>
+      <label>Officer Wallet Address</label>
+      <input
+        id="off-address"
+        placeholder="Paste address from Ganache accounts list"
+      />
+      <button onclick="addOfficer()">➕ Add Officer</button>
+      <button
+        onclick="removeOfficer()"
+        style="background: #dc3545; margin-left: 10px"
+      >
+        ➖ Remove Officer
+      </button>
+      <div
+        id="officer-status"
+        class="output-box"
+        style="margin-top: 10px; display: none"
+      ></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.9.0/web3.min.js"></script>
+    <script>
+      // ────────────────────────────────────────────────────────────────
+      //  STEP 1: After "truffle migrate", paste your contract address here
+      // ────────────────────────────────────────────────────────────────
+      const CONTRACT_ADDRESS = "0xB69315CBD2B52B25892e6E49d6ED8B41320F86B1";
+
+      // ────────────────────────────────────────────────────────────────
+      //  STEP 2: Copy the ABI from build/contracts/GovFundAllocation.json
+      //          and replace the ABI array below
+      // ────────────────────────────────────────────────────────────────
+      const ABI = [
+        {
+          inputs: [],
+          stateMutability: "nonpayable",
+          type: "constructor",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: "string",
+              name: "projectId",
+              type: "string",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "newEstimate",
+              type: "uint256",
+            },
+          ],
+          name: "EstimateUpdated",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "uint256",
+              name: "recordId",
+              type: "uint256",
+            },
+            {
+              indexed: true,
+              internalType: "string",
+              name: "projectId",
+              type: "string",
+            },
+            {
+              indexed: false,
+              internalType: "string",
+              name: "eventName",
+              type: "string",
+            },
+            {
+              indexed: false,
+              internalType: "string",
+              name: "contractorName",
+              type: "string",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "projectEstimate",
+              type: "uint256",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "fundAllocated",
+              type: "uint256",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "totalFundTillNow",
+              type: "uint256",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "timestamp",
+              type: "uint256",
+            },
+            {
+              indexed: false,
+              internalType: "address",
+              name: "recordedBy",
+              type: "address",
+            },
+          ],
+          name: "FundAllocated",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: "address",
+              name: "officer",
+              type: "address",
+            },
+          ],
+          name: "OfficerAdded",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: "address",
+              name: "officer",
+              type: "address",
+            },
+          ],
+          name: "OfficerRemoved",
+          type: "event",
+        },
+        {
+          inputs: [],
+          name: "admin",
+          outputs: [
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+          constant: true,
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+          ],
+          name: "authorizedOfficers",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+          constant: true,
+        },
+        {
+          inputs: [
+            {
+              internalType: "string",
+              name: "",
+              type: "string",
+            },
+          ],
+          name: "projectEstimates",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+          constant: true,
+        },
+        {
+          inputs: [
+            {
+              internalType: "string",
+              name: "",
+              type: "string",
+            },
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          name: "projectRecords",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+          constant: true,
+        },
+        {
+          inputs: [
+            {
+              internalType: "string",
+              name: "",
+              type: "string",
+            },
+          ],
+          name: "projectTotalFunds",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+          constant: true,
+        },
+        {
+          inputs: [],
+          name: "recordCounter",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+          constant: true,
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          name: "records",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "recordId",
+              type: "uint256",
+            },
+            {
+              internalType: "string",
+              name: "eventName",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "contractorName",
+              type: "string",
+            },
+            {
+              internalType: "uint256",
+              name: "projectEstimate",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "fundAllocated",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "totalFundTillNow",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "timestamp",
+              type: "uint256",
+            },
+            {
+              internalType: "address",
+              name: "recordedBy",
+              type: "address",
+            },
+            {
+              internalType: "string",
+              name: "remarks",
+              type: "string",
+            },
+            {
+              internalType: "bool",
+              name: "exists",
+              type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+          constant: true,
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "_officer",
+              type: "address",
+            },
+          ],
+          name: "addOfficer",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "_officer",
+              type: "address",
+            },
+          ],
+          name: "removeOfficer",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "string",
+              name: "_projectId",
+              type: "string",
+            },
+            {
+              internalType: "uint256",
+              name: "_estimate",
+              type: "uint256",
+            },
+          ],
+          name: "setProjectEstimate",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "string",
+              name: "_projectId",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "_eventName",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "_contractorName",
+              type: "string",
+            },
+            {
+              internalType: "uint256",
+              name: "_fundAllocated",
+              type: "uint256",
+            },
+            {
+              internalType: "string",
+              name: "_remarks",
+              type: "string",
+            },
+          ],
+          name: "allocateFund",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "recordId",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "_recordId",
+              type: "uint256",
+            },
+          ],
+          name: "getRecord",
+          outputs: [
+            {
+              components: [
+                {
+                  internalType: "uint256",
+                  name: "recordId",
+                  type: "uint256",
+                },
+                {
+                  internalType: "string",
+                  name: "eventName",
+                  type: "string",
+                },
+                {
+                  internalType: "string",
+                  name: "contractorName",
+                  type: "string",
+                },
+                {
+                  internalType: "uint256",
+                  name: "projectEstimate",
+                  type: "uint256",
+                },
+                {
+                  internalType: "uint256",
+                  name: "fundAllocated",
+                  type: "uint256",
+                },
+                {
+                  internalType: "uint256",
+                  name: "totalFundTillNow",
+                  type: "uint256",
+                },
+                {
+                  internalType: "uint256",
+                  name: "timestamp",
+                  type: "uint256",
+                },
+                {
+                  internalType: "address",
+                  name: "recordedBy",
+                  type: "address",
+                },
+                {
+                  internalType: "string",
+                  name: "remarks",
+                  type: "string",
+                },
+                {
+                  internalType: "bool",
+                  name: "exists",
+                  type: "bool",
+                },
+              ],
+              internalType: "struct GovFundAllocation.FundRecord",
+              name: "",
+              type: "tuple",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+          constant: true,
+        },
+        {
+          inputs: [
+            {
+              internalType: "string",
+              name: "_projectId",
+              type: "string",
+            },
+          ],
+          name: "getProjectRecordIds",
+          outputs: [
+            {
+              internalType: "uint256[]",
+              name: "",
+              type: "uint256[]",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+          constant: true,
+        },
+        {
+          inputs: [
+            {
+              internalType: "string",
+              name: "_projectId",
+              type: "string",
+            },
+          ],
+          name: "getProjectHistory",
+          outputs: [
+            {
+              components: [
+                {
+                  internalType: "uint256",
+                  name: "recordId",
+                  type: "uint256",
+                },
+                {
+                  internalType: "string",
+                  name: "eventName",
+                  type: "string",
+                },
+                {
+                  internalType: "string",
+                  name: "contractorName",
+                  type: "string",
+                },
+                {
+                  internalType: "uint256",
+                  name: "projectEstimate",
+                  type: "uint256",
+                },
+                {
+                  internalType: "uint256",
+                  name: "fundAllocated",
+                  type: "uint256",
+                },
+                {
+                  internalType: "uint256",
+                  name: "totalFundTillNow",
+                  type: "uint256",
+                },
+                {
+                  internalType: "uint256",
+                  name: "timestamp",
+                  type: "uint256",
+                },
+                {
+                  internalType: "address",
+                  name: "recordedBy",
+                  type: "address",
+                },
+                {
+                  internalType: "string",
+                  name: "remarks",
+                  type: "string",
+                },
+                {
+                  internalType: "bool",
+                  name: "exists",
+                  type: "bool",
+                },
+              ],
+              internalType: "struct GovFundAllocation.FundRecord[]",
+              name: "",
+              type: "tuple[]",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+          constant: true,
+        },
+        {
+          inputs: [
+            {
+              internalType: "string",
+              name: "_projectId",
+              type: "string",
+            },
+          ],
+          name: "getProjectSummary",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "estimate",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "totalAllocated",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "remaining",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "numberOfTransactions",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+          constant: true,
+        },
+        {
+          inputs: [
+            {
+              internalType: "string",
+              name: "_projectId",
+              type: "string",
+            },
+          ],
+          name: "verifyProjectIntegrity",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "isValid",
+              type: "bool",
+            },
+            {
+              internalType: "uint256",
+              name: "computedTotal",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+          constant: true,
+        },
+      ];
+
+      // ────────────────────────────────────────────────────────────────
+      //  Connect to Ganache directly — no MetaMask needed
+      // ────────────────────────────────────────────────────────────────
+      const web3 = new Web3("http://127.0.0.1:7545");
+      const contract = new web3.eth.Contract(ABI, CONTRACT_ADDRESS);
+      let currentAccount = "";
+      let adminAddress = "";
+
+      async function loadAccounts() {
+        try {
+          const accounts = await web3.eth.getAccounts();
+          adminAddress = await contract.methods.admin().call();
+          const select = document.getElementById("account-select");
+          select.innerHTML = "";
+          accounts.forEach((acc, i) => {
+            const opt = document.createElement("option");
+            opt.value = acc;
+            const isAdmin = acc.toLowerCase() === adminAddress.toLowerCase();
+            opt.textContent = `Account ${i}  —  ${acc}${isAdmin ? "  [ADMIN]" : ""}`;
+            select.appendChild(opt);
+          });
+          currentAccount = accounts[0];
+          const isAdmin =
+            currentAccount.toLowerCase() === adminAddress.toLowerCase();
+          document.getElementById("wallet-info").innerHTML =
+            `✓ Connected to Ganache &nbsp;|&nbsp; ${accounts.length} accounts loaded<br>
+       <b>Current Account:</b> ${currentAccount} ${isAdmin ? '<span style="background:#28a745;color:white;padding:2px 8px;border-radius:10px;font-size:12px;">ADMIN</span>' : ""}<br>
+       <b>Contract Admin:</b> ${adminAddress}`;
+        } catch (e) {
+          document.getElementById("wallet-info").textContent =
+            "❌ Cannot connect to Ganache. Make sure Ganache app is open and running on port 7545.";
+          document.getElementById("wallet-info").style.background = "#f8d7da";
+        }
+      }
+
+      function switchAccount() {
+        currentAccount = document.getElementById("account-select").value;
+        const isAdmin =
+          currentAccount.toLowerCase() === adminAddress.toLowerCase();
+        document.getElementById("wallet-info").innerHTML =
+          `✓ Connected to Ganache &nbsp;|&nbsp; Active account switched<br>
+     <b>Current Account:</b> ${currentAccount} ${isAdmin ? '<span style="background:#28a745;color:white;padding:2px 8px;border-radius:10px;font-size:12px;">ADMIN</span>' : ""}`;
+        showStatus("Switched to account: " + currentAccount);
+      }
+
+      function showStatus(msg, isError = false) {
+        const el = document.getElementById("status");
+        el.textContent = msg;
+        el.className = isError ? "error" : "success";
+        el.style.display = "block";
+        setTimeout(() => (el.style.display = "none"), 5000);
+      }
+
+      function formatTimestamp(ts) {
+        return new Date(parseInt(ts) * 1000).toLocaleString();
+      }
+
+      async function setEstimate() {
+        const pid = document.getElementById("est-projectId").value.trim();
+        const amt = document.getElementById("est-amount").value.trim();
+        if (!pid || !amt) {
+          showStatus("Fill all fields", true);
+          return;
+        }
+        try {
+          showStatus("Sending transaction...");
+          await contract.methods
+            .setProjectEstimate(pid, amt)
+            .send({ from: currentAccount, gas: 200000 });
+          showStatus("✓ Estimate set for " + pid);
+        } catch (e) {
+          showStatus("Error: " + e.message, true);
+        }
+      }
+
+      async function allocateFund() {
+        const pid = document.getElementById("al-projectId").value.trim();
+        const name = document.getElementById("al-eventName").value.trim();
+        const con = document.getElementById("al-contractor").value.trim();
+        const fund = document.getElementById("al-fund").value.trim();
+        const rem = document.getElementById("al-remarks").value.trim();
+        if (!pid || !name || !con || !fund) {
+          showStatus("Fill all required fields", true);
+          return;
+        }
+        try {
+          showStatus("Sending transaction...");
+          await contract.methods
+            .allocateFund(pid, name, con, fund, rem)
+            .send({ from: currentAccount, gas: 500000 });
+          showStatus("✓ Fund allocated successfully!");
+        } catch (e) {
+          showStatus("Error: " + e.message, true);
+        }
+      }
+
+      async function getRecord() {
+        const id = document.getElementById("rec-id").value.trim();
+        if (!id) {
+          showStatus("Enter a record ID", true);
+          return;
+        }
+        try {
+          const r = await contract.methods.getRecord(id).call();
+          document.getElementById("record-output").textContent =
+            `Record ID        : ${r.recordId}
+Event Name       : ${r.eventName}
+Contractor       : ${r.contractorName}
+Project Estimate : ${r.projectEstimate}
+Fund Allocated   : ${r.fundAllocated}
+Total Till Now   : ${r.totalFundTillNow}
+Timestamp        : ${formatTimestamp(r.timestamp)}
+Recorded By      : ${r.recordedBy}
+Remarks          : ${r.remarks}`;
+        } catch (e) {
+          document.getElementById("record-output").textContent =
+            "Record not found.";
+          showStatus("Error: " + e.message, true);
+        }
+      }
+
+      async function getProjectSummary() {
+        const pid = document.getElementById("sum-projectId").value.trim();
+        if (!pid) {
+          showStatus("Enter project ID", true);
+          return;
+        }
+        try {
+          const s = await contract.methods.getProjectSummary(pid).call();
+          document.getElementById("summary-output").textContent =
+            `Project ID             : ${pid}
+Estimate               : ${s.estimate}
+Total Allocated        : ${s.totalAllocated}
+Remaining Budget       : ${s.remaining}
+Number of Transactions : ${s.numberOfTransactions}`;
+        } catch (e) {
+          showStatus("Error: " + e.message, true);
+        }
+      }
+
+      async function getProjectHistory() {
+        const pid = document.getElementById("hist-projectId").value.trim();
+        if (!pid) {
+          showStatus("Enter project ID", true);
+          return;
+        }
+        try {
+          const history = await contract.methods.getProjectHistory(pid).call();
+          const tbody = document.getElementById("history-body");
+          const table = document.getElementById("history-table");
+          const empty = document.getElementById("history-empty");
+          tbody.innerHTML = "";
+          if (history.length === 0) {
+            table.style.display = "none";
+            empty.textContent = "No records found for this project.";
+            return;
+          }
+          empty.textContent = "";
+          table.style.display = "table";
+          history.forEach((r) => {
+            tbody.innerHTML += `<tr>
+        <td>${r.recordId}</td>
+        <td>${r.eventName}</td>
+        <td>${r.contractorName}</td>
+        <td>${r.projectEstimate}</td>
+        <td>${r.fundAllocated}</td>
+        <td>${r.totalFundTillNow}</td>
+        <td>${formatTimestamp(r.timestamp)}</td>
+        <td>${r.recordedBy.substring(0, 12)}...</td>
+      </tr>`;
+          });
+        } catch (e) {
+          showStatus("Error: " + e.message, true);
+        }
+      }
+
+      async function verifyIntegrity() {
+        const pid = document.getElementById("ver-projectId").value.trim();
+        if (!pid) {
+          showStatus("Enter project ID", true);
+          return;
+        }
+        try {
+          const result = await contract.methods
+            .verifyProjectIntegrity(pid)
+            .call();
+          document.getElementById("verify-output").textContent =
+            `Project ID     : ${pid}
+Is Valid       : ${result.isValid ? "✓ YES — Data intact, no tampering detected" : "✗ NO — DATA MISMATCH DETECTED!"}
+Computed Total : ${result.computedTotal}`;
+        } catch (e) {
+          showStatus("Error: " + e.message, true);
+        }
+      }
+
+      async function addOfficer() {
+        const addr = document.getElementById("off-address").value.trim();
+        if (!addr) {
+          showStatus("Enter wallet address", true);
+          return;
+        }
+        try {
+          showStatus("Sending transaction...");
+          await contract.methods
+            .addOfficer(addr)
+            .send({ from: currentAccount, gas: 100000 });
+          const box = document.getElementById("officer-status");
+          box.style.display = "block";
+          box.textContent = `✓ Officer ADDED: ${addr}`;
+          box.style.color = "#155724";
+          showStatus("✓ Officer added: " + addr);
+        } catch (e) {
+          showStatus("Error: " + e.message, true);
+        }
+      }
+
+      async function removeOfficer() {
+        const addr = document.getElementById("off-address").value.trim();
+        if (!addr) {
+          showStatus("Enter wallet address", true);
+          return;
+        }
+        try {
+          showStatus("Sending transaction...");
+          await contract.methods
+            .removeOfficer(addr)
+            .send({ from: currentAccount, gas: 100000 });
+          const box = document.getElementById("officer-status");
+          box.style.display = "block";
+          box.textContent = `✓ Officer REMOVED: ${addr}`;
+          box.style.color = "#721c24";
+          showStatus("✓ Officer removed: " + addr);
+        } catch (e) {
+          showStatus("Error: " + e.message, true);
+        }
+      }
+
+      // Start
+      loadAccounts();
+    </script>
+  </body>
+</html>
