@@ -1,0 +1,106 @@
+.portal-container {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f0f4f8 0%, #e1e8ef 100%);
+  padding: 4rem 2rem;
+}
+
+.portal-header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.portal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.portal-card {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.portal-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+}
+
+.portal-icon-wrapper {
+  width: 64px;
+  height: 64px;
+  background: #e2e8f0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  margin-bottom: 1.5rem;
+}
+
+.admin-icon {
+  background: #0047AB;
+  color: white;
+}
+
+.portal-info {
+  margin-bottom: 2rem;
+  flex: 1;
+}
+
+.badge-role {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.badge-role-admin {
+  background: #e0e7ff;
+  color: #0047AB;
+}
+.badge-role-officer {
+  background: #f1f5f9;
+  color: #475569;
+}
+.badge-role-viewer {
+  background: #f1f5f9;
+  color: #94a3b8;
+}
+
+.btn-portal {
+  width: 100%;
+  padding: 0.8rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: transparent;
+  color: #1e293b;
+  font-weight: 600;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-portal:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.portal-card:first-child .btn-portal {
+  background: #0047AB;
+  color: white;
+  border: none;
+}
+.portal-card:first-child .btn-portal:hover {
+  background: #003380;
+}

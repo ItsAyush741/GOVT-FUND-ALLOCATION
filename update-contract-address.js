@@ -32,16 +32,28 @@ try {
 
   // Update index.html
   const htmlPath = path.join(__dirname, 'index.html');
-  let htmlContent = fs.readFileSync(htmlPath, 'utf8');
+  if (fs.existsSync(htmlPath)) {
+    let htmlContent = fs.readFileSync(htmlPath, 'utf8');
+    htmlContent = htmlContent.replace(
+      /const CONTRACT_ADDRESS = "0x[a-fA-F0-9]{40}";/,
+      `const CONTRACT_ADDRESS = "${newAddress}";`
+    );
+    fs.writeFileSync(htmlPath, htmlContent);
+    console.log(`✅ Successfully updated index.html with new address: ${newAddress}`);
+  }
 
-  // Replace the contract address line
-  htmlContent = htmlContent.replace(
-    /const CONTRACT_ADDRESS = "0x[a-fA-F0-9]{40}";/,
-    `const CONTRACT_ADDRESS = "${newAddress}";`
-  );
-
-  fs.writeFileSync(htmlPath, htmlContent);
-  console.log(`✅ Successfully updated index.html with new address: ${newAddress}`);
+  // Update backend/server.js if using .env or hardcoded.
+  // The backend uses .env, so we could update the .env if needed, but for now we focus on frontend:
+  const reactContextPath = path.join(__dirname, 'frontend', 'src', 'context', 'Web3Context.jsx');
+  if (fs.existsSync(reactContextPath)) {
+    let reactContent = fs.readFileSync(reactContextPath, 'utf8');
+    reactContent = reactContent.replace(
+      /const CONTRACT_ADDRESS = "0x[a-fA-F0-9]{40}";/,
+      `const CONTRACT_ADDRESS = "${newAddress}";`
+    );
+    fs.writeFileSync(reactContextPath, reactContent);
+    console.log(`✅ Successfully updated frontend/src/context/Web3Context.jsx with new address!`);
+  }
 
 } catch (error) {
   console.error("❌ Error:", error.message);
