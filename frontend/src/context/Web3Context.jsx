@@ -3,7 +3,7 @@ import Web3 from 'web3';
 
 const Web3Context = createContext();
 
-// Copied ABI from the original repository HTML (abridged for core funcs)
+// Copied ABI from the original repository
 const CONTRACT_ADDRESS = "0x87Eb929993c0eD7fc5580ff1B3b9098c28E31D87";
 const ABI = [
   {"inputs":[],"stateMutability":"nonpayable","type":"constructor"},
@@ -31,40 +31,83 @@ const ABI = [
 export const Web3Provider = ({ children }) => {
   const [web3, setWeb3] = useState(null);
   const [contract, setContract] = useState(null);
-  const [accounts, setAccounts] = useState([]);
   const [currentAccount, setCurrentAccount] = useState(null);
   const [adminAddress, setAdminAddress] = useState(null);
   const [isOfficer, setIsOfficer] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  const [providerError, setProviderError] = useState(null); // Track if metamask is missing
 
   useEffect(() => {
     initWeb3();
+    
+    // MetaMask Account Change Listener
+    if (window.ethereum) {
+      window.ethereum.on('accountsChanged', (accounts) => {
+        if (accounts.length > 0) {
+          checkRoles(accounts[0]);
+        } else {
+          logout();
+        }
+      });
+      window.ethereum.on('chainChanged', () => window.location.reload());
+    }
   }, []);
 
   const initWeb3 = async () => {
     try {
-      const w3 = new Web3(new Web3.providers.HttpProvider("http://127.0.0.1:7545"));
-      const ctr = new w3.eth.Contract(ABI, CONTRACT_ADDRESS);
-      setWeb3(w3);
-      setContract(ctr);
+      if (window.ethereum) {
+        setProviderError(null);
+        // Do not auto-login (request accounts), wait for user to hit Connect Wallet in UI
+        const w3 = new Web3(window.ethereum);
+        const ctr = new w3.eth.Contract(ABI, CONTRACT_ADDRESS);
+        
+        setWeb3(w3);
+        setContract(ctr);
 
-      const accs = await w3.eth.getAccounts();
-      setAccounts(accs);
-      
-      const admin = await ctr.methods.admin().call();
-      setAdminAddress(admin.toLowerCase());
-      setIsConnected(true);
+        // Fetch the admin address globally since it governs everything
+        const admin = await ctr.methods.admin().call();
+        setAdminAddress(admin.toLowerCase());
+        
+        setIsConnected(true);
+        
+        // If they already authorized this site previously, window.ethereum might expose accounts immediately
+        const accounts = await w3.eth.getAccounts();
+        if (accounts.length > 0) {
+           await checkRoles(accounts[0], ctr, admin.toLowerCase());
+        }
+      } else {
+        setProviderError("MetaMask not detected. Please install the extension.");
+        setIsConnected(false);
+      }
     } catch (error) {
-      console.error("Failed to connect to Ganache:", error);
+      console.error("Failed to initialize Web3:", error);
     }
   };
 
-  const loginAccount = async (account) => {
-    setCurrentAccount(account);
-    // Check if they are officer
-    if (contract) {
-      const isAuthOff = await contract.methods.authorizedOfficers(account).call();
-      setIsOfficer(isAuthOff || account.toLowerCase() === adminAddress);
+  const checkRoles = async (account, activeContract = contract, activeAdmin = adminAddress) => {
+    if (!activeContract) return;
+    try {
+      setCurrentAccount(account);
+      // Check if they are authorized officer
+      const isAuthOff = await activeContract.methods.authorizedOfficers(account).call();
+      setIsOfficer(isAuthOff || account.toLowerCase() === activeAdmin);
+    } catch (e) {
+      console.error("Error verifying roles", e);
+    }
+  };
+
+  const loginAccount = async () => {
+    if (!window.ethereum) {
+      setProviderError("MetaMask is required to connect.");
+      return;
+    }
+    try {
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      if (accounts && accounts.length > 0) {
+        await checkRoles(accounts[0]);
+      }
+    } catch (error) {
+      console.error("User rejected wallet connection:", error);
     }
   };
 
@@ -76,12 +119,12 @@ export const Web3Provider = ({ children }) => {
   const value = {
     web3,
     contract,
-    accounts,
     currentAccount,
     adminAddress,
-    isAdmin: currentAccount && adminAddress && currentAccount.toLowerCase() === adminAddress.toLowerCase(),
+    isAdmin: currentAccount && adminAddress && currentAccount.toLowerCase() === adminAddress,
     isOfficer,
     isConnected,
+    providerError,
     loginAccount,
     logout
   };

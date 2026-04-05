@@ -3,7 +3,7 @@ import { ShieldCheck, Activity, LineChart, Link } from 'lucide-react';
 import { useWeb3 } from '../context/Web3Context';
 
 const Dashboard = () => {
-  const { contract, accounts } = useWeb3();
+  const { contract, currentAccount } = useWeb3();
   const [totalRecords, setTotalRecords] = useState(0);
 
   useEffect(() => {
@@ -28,12 +28,12 @@ const Dashboard = () => {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
                 <LineChart size={20} className="text-muted" />
-                <h2 style={{ fontSize: '2rem', margin: 0 }}>{totalRecords}</h2>
+                <h2 style={{ fontSize: '2rem', margin: 0 }}>{totalRecords?.toString()}</h2>
               </div>
               <p className="text-muted text-small">Total Verified Allocations</p>
             </div>
             <div>
-              <h2 style={{ fontSize: '2rem', margin: '0 0 0.5rem 0' }}>{accounts.length}</h2>
+              <h2 style={{ fontSize: '2rem', margin: '0 0 0.5rem 0' }}>1</h2>
               <p className="text-muted text-small">Active Institutional Nodes</p>
             </div>
           </div>
